@@ -63,13 +63,7 @@ df_crew[,df_crew_fctrs] <- lapply(df_crew[,df_crew_fctrs] , factor)
 df_movies_raw <- df_movies_raw %>%
   mutate(profit = revenue - budget, profit_margin = profit/revenue)
 
-# Examine the resulting dataframes
-glimpse(df_movies_raw)
-summary(df_movies_raw)
-
 df_movies_no_dups <- df_movies_raw %>% distinct(id, .keep_all = TRUE)
-glimpse(df_movies_no_dups)
-summary(df_movies_no_dups)
 
 df_movies <- df_movies_no_dups %>%
   filter(status == 'Released', budget >= 10000, revenue >= 10000)%>%
@@ -134,18 +128,16 @@ ggplot(df_movies_w_coll) +
   coord_flip()
 
 ggplot(df_movies_w_coll) + 
+  geom_boxplot(aes(x = profit_group, y = vote_average)) +
+  coord_flip()
+
+ggplot(df_movies_w_coll) + 
   geom_boxplot(aes(x = profit_group, y = runtime)) +
   coord_flip()
 
 ggplot(df_movies_w_coll) + 
   geom_boxplot(aes(x = profit_group, y = popularity)) +
   coord_flip()
-
-ggplot(df_movies_w_coll) + 
-  geom_boxplot(aes(x = profit_group, y = vote_average)) +
-  coord_flip()
-
-
 
 ggplot(df_movies, aes(x = budget)) +
   geom_density(bw = 50, fill = 'steelblue') 

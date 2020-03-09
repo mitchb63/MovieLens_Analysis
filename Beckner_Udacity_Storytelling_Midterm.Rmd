@@ -35,9 +35,23 @@ An issue tree summarizing the analysis can be seen in Figure 1.
 
 ## Data Cleaning and EDA
 
-The original files required some transformation and data cleaning.  This was done using a combination of Excel and R.  New variables for profit and profit margin were created as profit margin is to be the primary measure of a film's success.  Once these variables were created, the dataset was filtered to remove any films that did not include the financial information required for the anaylsis.  This took the available data from over 45,000 movies to under 5,300.  The 90th percentile based on profit margin was then determined for the remaining films and a new variable was created assigning each film to either the top 10% or bottom 90% group.  
+The original files required some transformation and data cleaning.  This was done using a combination of Excel and R.  New variables for profit and profit margin were created as profit margin is to be the primary measure of a film's success.  Once these variables were created, the dataset was filtered to remove any films that did not include the financial information required for the anaylsis.  This took the available data from over 45,000 movies to under 5,300.  The 90th percentile based on profit margin was then determined for the remaining films and a new variable was created assigning each film to either the top 10% or bottom 90% group (see Figures 2 and 3).  
 
-Very basic EDA was then performed in R just to get a rough beginning idea of what might be found when exploring the proposed hypotheses.  Examples of this early analysis can be seen in the pdf and PowerPoint files linked to above.
+![New Variables and Filtering](code_image_1.jpg)
+
+![Assignment of Films to Groups](code_image_2.jpg)
+
+Very basic EDA was then performed in R just to get a rough beginning idea of what might be found when exploring the proposed hypotheses.  Examples of this early analysis can be seen in Figures 4 through 8, and in the pdf and PowerPoint files linked to above.
+
+![Assignment of Films by Collection](code_image_3.jpg)
+
+![Plot of Films by Collection](plot1.jpeg)
+
+![Code Plotting Films by Budget and Vote Average](code_image_4.jpg)
+
+![Plot of Films by Budget](plot2.jpeg)
+
+![Plot of Films by Vote Average](plot3.jpeg)
 
 ## References
 
