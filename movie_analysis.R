@@ -33,6 +33,7 @@ df_movies_raw <- df_movies_raw[, cols]
 #  Convert date fields
 df_movies_raw$release_date <- ymd(df_movies_raw$release_date)
 df_ratings$timestamp <- as.POSIXct(df_ratings$timestamp, origin="1970-01-01")
+df_movies_raw$release_month <- month(df_movies_raw$release_date, label = TRUE)
 
 # Convert selected columns to integers
 df_movie_ints <- c(2, 6,7,11)
@@ -70,12 +71,28 @@ df_genres[,df_genres_fctrs] <- lapply(df_genres[,df_genres_fctrs] , factor)
 df_languages_fctrs <- c(1:11)
 df_languages[,df_languages_fctrs] <- lapply(df_languages[,df_languages_fctrs] , factor)
 
+glimpse(df_movies_raw)
+summary(df_movies_raw)
+
+# Function to replace '0's' with NA's
+replace_zeros <- function (x){
+  if (is.na(x)){
+    NA}
+  else if (x == 0){
+    NA}
+  else{
+    x}
+}
+
+# Apply the function to clean the zeros
+df_movies_raw$budget <- unlist(lapply(df_movies_raw$budget, replace_zeros))
+df_movies_raw$revenue <- unlist(lapply(df_movies_raw$revenue, replace_zeros))
+df_movies_raw$vote_average <- unlist(lapply(df_movies_raw$vote_average, replace_zeros))
+
 # Create new profit and profit margin variables
 df_movies_raw <- df_movies_raw %>%
   mutate(profit = revenue - budget, profit_margin = profit/revenue)
 
-glimpse(df_movies_raw)
-summary(df_movies_raw)
 
 movie_div <-quantile(df_movies_raw$profit_margin, probs = 0.80, na.rm = TRUE)
 
@@ -541,3 +558,16 @@ df_movies <- df_movies %>%
 
 glimpse(df_movies)
 summary(df_movies)
+
+##########################################
+# Output the resulting files
+print("writing movie data csv...")
+write_csv(df_movies, "data/processed/df_movies.csv")
+
+print("writing parameter lists csv...")
+write_csv(keyword_diff_list, "data/processed/keyword_diff_list.csv")
+write_csv(actor_list, "data/processed/actor_list.csv")
+write_csv(producer_list, "data/processed/producer_list.csv")
+write_csv(country_diff_list, "data/processed/country_diff_list.csv")
+write_csv(genre_diff_list, "data/processed/genre_diff_list.csv")
+write_csv(language_diff_list, "data/processed/language_diff_list.csv")
