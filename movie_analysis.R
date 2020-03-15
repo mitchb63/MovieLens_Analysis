@@ -120,17 +120,22 @@ df_movies <- df_movies_raw %>%
 glimpse(df_keywords)
 head(df_keywords)
 
+# Select the first 10 keywords for each film
 df_keywords <- df_keywords[,1:11]
 
 # Get the id and profit group for each id
 glimpse(df_movies)
+
+# Create a dataframe with id and profit_group
 group_cols <- c(1, 14)
 df_groups <- df_movies[, group_cols]
 glimpse(df_groups)
 
+# Join the profit_group data to the keyword data
 df_keywords_grps <- df_keywords %>%
   left_join(df_groups, by = 'id')
 
+# Tidy the dataframe
 df_keywords_tidy <- df_keywords_grps %>%
   pivot_longer(cols = 2:11, names_to = "keyword_num", values_to = "keyword")
 
@@ -150,9 +155,11 @@ examine_column <- function(x) {
   return(df)
 }
 
+# Create lists of the keywords used in each group sorted by descending Freq
 df_top_keywords <- examine_column(df_keywords_top$keyword)
 df_bottom_keywords <- examine_column(df_keywords_bottom$keyword)
 
+# Looking at the top n rows of each file
 sample_rows <- c(1:50)
 sample_top <- df_top_keywords[sample_rows,]
 sample_bottom <- df_bottom_keywords[sample_rows,]
@@ -171,12 +178,12 @@ flg_keywords <- function(x) {
 df_keywords_tidy$keyword_flg <- unlist(lapply(df_keywords_tidy$keyword, flg_keywords))
 
 glimpse(df_keywords_tidy)
-summary(df_keywords_tidy)
+head(df_keywords_tidy)
 
 key_cols <- c(1,5)
 df_keywords_join <- df_keywords_tidy[,key_cols] %>%
   group_by(id) %>%
-  summarize(key_avg = mean(keyword_flg))
+  summarize(key_sum = sum(keyword_flg))
 
 # Function to flag movies with keywords from the keyword difference list
 flg_keyword_films <- function(x) {
@@ -186,7 +193,7 @@ flg_keyword_films <- function(x) {
 }
 
 # Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
-df_keywords_join$keyword_bin <- factor(unlist(lapply(df_keywords_join$key_avg, flg_keyword_films)))
+df_keywords_join$keyword_bin <- factor(unlist(lapply(df_keywords_join$key_sum, flg_keyword_films)))
 
 df_movies <- df_movies %>%
   left_join(df_keywords_join, by = 'id')
@@ -201,8 +208,10 @@ summary(df_cast)
 
 # Read in the IMDB "Top Actor" list
 df_top_actors <- read_csv('data/Top_actors.csv')
-glimpse(df_top_actors)
+actor_list <- as.vector(df_top_actors$Name)
+glimpse(actor_list)
 
+# Join the profit_group data with the cast data
 df_cast_grps <- df_cast %>%
   left_join(df_groups, by = 'id')
 
@@ -217,14 +226,36 @@ df_cast_top <- df_cast_tidy %>%
 df_cast_bottom <- df_cast_tidy %>%
   filter(profit_group == 'Bottom_80')
 
-glimpse(df_cast_top)
-head(df_cast_top)
-glimpse(df_cast_bottom)
+# Function to flag rows with actors from the top actor list
+flg_actors <- function(x) {
+  if (x %in% actor_list){
+    1
+  }else{0}
+}
 
-#####  Flag each row that has a name matching the "Top Actors" list
-####
-#### 
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_cast_tidy$actor_flg <- unlist(lapply(df_cast_tidy$actor, flg_actors))
 
+actor_cols <- c(1,5)
+df_cast_join <- df_cast_tidy[,actor_cols] %>%
+  group_by(id) %>%
+  summarize(actor_sum = sum(actor_flg))
+
+# Function to flag movies with keywords from the keyword difference list
+flg_actor_films <- function(x) {
+  if (x != 0){
+    1
+  }else{0}
+}
+
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_cast_join$actor_bin <- factor(unlist(lapply(df_cast_join$actor_sum, flg_actor_films)))
+
+df_movies <- df_movies %>%
+  left_join(df_cast_join, by = 'id')
+
+glimpse(df_movies)
+summary(df_movies)
 
 ##########################################################################################
 # Process the crew data
@@ -233,8 +264,10 @@ summary(df_crew)
 
 # Read in the IMDB "Top Actor" list
 df_top_producers <- read_csv('data/Top_producers.csv')
-glimpse(df_top_producers)
+producer_list <- as.vector(df_top_producers$Name)
+glimpse(producer_list)
 
+# Join the profit_group data with the cast data
 df_crew_grps <- df_crew %>%
   left_join(df_groups, by = c('movie_ID' = 'id'))
 
@@ -259,49 +292,125 @@ df_crew_top <- df_crew_tidy %>%
 df_crew_bottom <- df_crew_tidy %>%
   filter(profit_group == 'Bottom_80')
 
-glimpse(df_crew_top)
-glimpse(df_crew_bottom)
+# Function to flag rows with actors from the top actor list
+flg_crew <- function(x) {
+  if (x %in% producer_list){
+    1
+  }else{0}
+}
 
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_crew_tidy$crew_flg <- unlist(lapply(df_crew_tidy$Name, flg_crew))
+
+crew_cols <- c(1,5)
+df_crew_join <- df_crew_tidy[,crew_cols] %>%
+  group_by(movie_ID) %>%
+  summarize(crew_sum = sum(crew_flg))
+
+# Function to flag movies with keywords from the keyword difference list
+flg_crew_films <- function(x) {
+  if (x != 0){
+    1
+  }else{0}
+}
+
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_crew_join$crew_bin <- factor(unlist(lapply(df_crew_join$crew_sum, flg_crew_films)))
+
+df_movies <- df_movies %>%
+  left_join(df_crew_join, by = c('id' = 'movie_ID'))
+
+glimpse(df_movies)
+summary(df_movies)
 
 ##########################################################################################
 # Process the countries data
+# Look at the top 5 countries for each film
+df_countries <- df_countries[,1:6]
 glimpse(df_countries)
 summary(df_countries)
-# Investigate why there is a max of 5 countries
 
+# Join the profit_group data with the country data
 df_country_grps <- df_countries %>%
   left_join(df_groups, by = 'id')
 
 df_countries_tidy <- df_country_grps %>%
-  pivot_longer(cols = 2:26, names_to = "country_num", values_to = "country") %>%
+  pivot_longer(cols = 2:6, names_to = "country_num", values_to = "country") %>%
   filter(!is.na(country))
 
-df_countries_num <- df_countries_tidy %>%
+df_countries_join_1 <- df_countries_tidy %>%
   group_by(id) %>%
   summarize(country_count = n())
-summary(df_countries_num)
-# Join this number to df_movies
+summary(df_countries_join_1)
 
-
+# Create top and Bottom dataframes
 df_countries_top <- df_countries_tidy %>%
   filter(profit_group == 'Top_20')
 
 df_countries_bottom <- df_countries_tidy %>%
   filter(profit_group == 'Bottom_80')
 
-glimpse(df_countries_top)
-glimpse(df_countries_bottom)
+# Function to extract number of unique values of a factor
+examine_column <- function(x) {
+  df <- as.data.frame(table(x)) %>%
+    arrange(desc(Freq))
+  print(df)
+  return(df)
+}
+
+# Create lists of the countries used in each group sorted by descending Freq
+df_top_countries <- examine_column(df_countries_top$country)
+df_bottom_countries <- examine_column(df_countries_bottom$country)
 
 
+# Looking at the top n rows of each file
+sample_rows <- c(1:10)
+sample_top <- df_top_countries[sample_rows,]
+sample_bottom <- df_bottom_countries[sample_rows,]
+country_differences <- anti_join(sample_top, sample_bottom, by = 'x')
+country_diff_list <- as.vector(country_differences$x)
 
+# Function to flag rows with keywords from the keyword difference list
+flg_countries <- function(x) {
+  if (x %in% country_diff_list){
+    1
+  }else{0}
+}
 
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_countries_tidy$country_flg <- unlist(lapply(df_countries_tidy$country, flg_countries))
 
+glimpse(df_countries_tidy)
+head(df_countries_tidy)
+
+country_cols <- c(1,5)
+df_countries_join_2 <- df_countries_tidy[,country_cols] %>%
+  group_by(id) %>%
+  summarize(country_sum = sum(country_flg))
+
+# Function to flag movies with keywords from the keyword difference list
+flg_country_films <- function(x) {
+  if (x != 0){
+    1
+  }else{0}
+}
+
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_countries_join_2$country_bin <- factor(unlist(lapply(df_countries_join_2$country_sum, flg_country_films)))
+
+df_movies <- df_movies %>%
+  left_join(df_countries_join_1, by = 'id') %>%
+  left_join(df_countries_join_2, by = 'id')
+
+glimpse(df_movies)
+summary(df_movies)
 
 ##########################################################################################
 # Process the genre data
 glimpse(df_genres)
 summary(df_genres)
 
+# Join the profit_group data with the country data
 df_genre_grps <- df_genres %>%
   left_join(df_groups, by = 'id')
 
@@ -343,7 +452,7 @@ summary(df_genres_tidy)
 key_cols <- c(1,5)
 df_genres_join <- df_genres_tidy[,key_cols] %>%
   group_by(id) %>%
-  summarize(genre_avg = mean(genre_flg))
+  summarize(genre_sum = sum(genre_flg))
 
 # Function to flag movies with genres from the genre difference list
 flg_genre_films <- function(x) {
@@ -353,7 +462,7 @@ flg_genre_films <- function(x) {
 }
 
 # Apply the function to categorize each row in the genre dataframe based on the genre diff list
-df_genres_join$genre_bin <- factor(unlist(lapply(df_genres_join$genre_avg, flg_genre_films)))
+df_genres_join$genre_bin <- factor(unlist(lapply(df_genres_join$genre_sum, flg_genre_films)))
 
 df_movies <- df_movies %>%
   left_join(df_genres_join, by = 'id')
@@ -361,15 +470,12 @@ df_movies <- df_movies %>%
 glimpse(df_movies)
 summary(df_movies)
 
-
-
 ##########################################################################################
 # Process the languages data
 glimpse(df_languages)
 summary(df_languages)
 
-# Investigate why there is a max of 5 languages
-
+# Join the profit_group data with the country data
 df_language_grps <- df_languages %>%
   left_join(df_groups, by = 'id')
 
@@ -377,235 +483,61 @@ df_languages_tidy <- df_language_grps %>%
   pivot_longer(cols = 2:11, names_to = "language_num", values_to = "language") %>%
   filter(!is.na(language))
 
-df_languages_num <- df_languages_tidy %>%
+df_languages_join_1 <- df_languages_tidy %>%
   group_by(id) %>%
   summarize(language_count = n())
-summary(df_languages_num)
-# Join this number to df_movies
+summary(df_languages_join_1)
 
-
+# Create top and Bottom dataframes
 df_languages_top <- df_languages_tidy %>%
   filter(profit_group == 'Top_20')
 
 df_languages_bottom <- df_languages_tidy %>%
   filter(profit_group == 'Bottom_80')
 
-glimpse(df_languages_top)
-glimpse(df_languages_bottom)
+# Create lists of the countries used in each group sorted by descending Freq
+df_top_languages <- examine_column(df_languages_top$language)
+df_bottom_languages <- examine_column(df_languages_bottom$language)
 
 
+# Looking at the top n rows of each file
+sample_rows <- c(1:5)
+sample_top <- df_top_languages[sample_rows,]
+sample_bottom <- df_bottom_languages[sample_rows,]
+language_differences <- anti_join(sample_top, sample_bottom, by = 'x')
+language_diff_list <- as.vector(language_differences$x)
 
-
-
-
-
-
-
-
-
-
-
-# Function to examine other columns to determine if additional cleaning is necessary
-examine_column <- function(x) {
-  df <- data.frame(unique(x))
-  arrange(df, unique.x.)
+# Function to flag rows with keywords from the keyword difference list
+flg_languages <- function(x) {
+  if (x %in% language_diff_list){
+    1
+  }else{0}
 }
 
-examine_column(df_)
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_languages_tidy$language_flg <- unlist(lapply(df_languages_tidy$language, flg_languages))
 
+glimpse(df_languages_tidy)
+head(df_languages_tidy)
 
+language_cols <- c(1,5)
+df_languages_join_2 <- df_languages_tidy[,language_cols] %>%
+  group_by(id) %>%
+  summarize(language_sum = sum(language_flg))
 
-
-glimpse(df_movies_raw)
-summary(df_movies_raw)
-
-
-
-
-
-glimpse(df_cast)
-summary(df_cast)
-
-glimpse(df_crew)
-summary(df_crew)
-
-glimpse(df_collections)
-summary(df_collections)
-
-glimpse(df_countries)
-summary(df_countries)
-
-glimpse(df_genres)
-summary(df_genres)
-
-glimpse(df_languages)
-summary(df_languages)
-
-
-
-
-
-
-
-
-
-
-# Function to examine other columns to determine if additional cleaning is necessary
-examine_column <- function(x) {
-  df <- data.frame(unique(x))
-  arrange(df, unique.x.)
+# Function to flag movies with keywords from the keyword difference list
+flg_language_films <- function(x) {
+  if (x != 0){
+    1
+  }else{0}
 }
 
-examine_column(df_f1$raceName)
+# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+df_languages_join_2$language_bin <- factor(unlist(lapply(df_languages_join_2$language_sum, flg_language_films)))
 
-
-
-
-
-
-
-
-
-
-
-
-df_movies <- df_movies_no_dups %>%
-  filter(status == 'Released', budget >= 10000, revenue >= 10000)%>%
-  arrange(budget)
-table(df_movies$budget)
-
-
-
-# Function to extract unique values of a factor
-examine_column <- function(x) {
-  df <- as.data.frame(table(x))
-  arrange(df, Freq) 
-  print(df)
-  return(df)
-}
-
-movie_list <- examine_column(df_movies$id)
-glimpse(movie_list)
-class(movie_list)
+df_movies <- df_movies %>%
+  left_join(df_languages_join_1, by = 'id') %>%
+  left_join(df_languages_join_2, by = 'id')
 
 glimpse(df_movies)
 summary(df_movies)
-
-df_collections_no_dups <- df_collections %>% distinct(id, .keep_all = TRUE)
-glimpse(df_collections_no_dups)
-summary(df_collections_no_dups)
-
-df_movies_w_coll <- left_join(df_movies, df_collections_no_dups, by = 'id')
-glimpse(df_movies_w_coll)
-summary(df_movies_w_coll)
-
-# Function to assign each movie to one of two categories regarding collections
-assign_collection <- function(x) {
-  if (as.character(x) == ''){
-    0}
-  else{
-    1}
-}
-
-# Apply the function to categorize each movie based on profit margin
-df_movies_w_coll$collection_bin <- as.factor(unlist(lapply(df_movies_w_coll$collection, assign_collection)))
-
-ggplot(df_movies_w_coll) +
-  geom_bar(aes(x = collection_bin, fill = profit_group), stat = 'count', position = 'dodge')
-
-ggplot(df_movies_w_coll) +
-  geom_bar(aes(x = month(release_date), fill = profit_group), stat = 'count', position = 'dodge')
-
-ggplot(df_movies_w_coll) + 
-  geom_boxplot(aes(x = profit_group, y = budget)) +
-  coord_flip()
-
-ggplot(df_movies_w_coll) + 
-  geom_boxplot(aes(x = profit_group, y = vote_average)) +
-  coord_flip()
-
-ggplot(df_movies_w_coll) + 
-  geom_boxplot(aes(x = profit_group, y = runtime)) +
-  coord_flip()
-
-ggplot(df_movies_w_coll) + 
-  geom_boxplot(aes(x = profit_group, y = popularity)) +
-  coord_flip()
-
-ggplot(df_movies, aes(x = budget)) +
-  geom_density(bw = 50, fill = 'steelblue') 
-
-ggplot(df_movies, aes(x = budget)) +
-  geom_histogram(bins = 50) 
-
-ggplot(df_movies, aes(x = 1, y = budget)) +
-  geom_boxplot() +
-  coord_flip()
-
-ggplot(df_movies, aes(x = revenue)) +
-  geom_density(bw = 50, fill = 'steelblue') 
-
-ggplot(df_movies, aes(x = revenue)) +
-  geom_histogram(bins = 50) 
-
-ggplot(df_movies, aes(x = 1, y = revenue)) +
-  geom_boxplot() +
-  coord_flip()
-
-ggplot(df_movies, aes(x = profit)) +
-  geom_density(bw = 50, fill = 'steelblue') 
-
-ggplot(df_movies, aes(x = profit)) +
-  geom_histogram(bins = 50) 
-
-ggplot(df_movies, aes(x = 1, y = profit)) +
-  geom_boxplot() +
-  coord_flip()
-
-ggplot(df_movies, aes(x = profit_margin)) +
-  geom_density(bw = 50, fill = 'steelblue') 
-
-ggplot(df_movies, aes(x = profit_margin)) +
-  geom_histogram(bins = 50) 
-
-ggplot(df_movies, aes(x = 1, y = profit_margin)) +
-  geom_boxplot() +
-  coord_flip()
-
-glimpse(df_ratings)
-summary(df_ratings)
-
-glimpse(df_keywords)
-summary(df_keywords)
-
-glimpse(df_cast)
-summary(df_cast)
-
-glimpse(df_crew)
-summary(df_crew)
-
-glimpse(df_collections)
-summary(df_collections)
-
-glimpse(df_countries)
-summary(df_countries)
-
-glimpse(df_genres)
-summary(df_genres)
-
-glimpse(df_languages)
-summary(df_languages)
-
-
-
-# Function to examine factor columns to determine if additional cleaning is necessary
-examine_column <- function(x) {
-  df <- data.frame(unique(x))
-  arrange(df, unique.x.)
-}
-
-examine_column(df_movies$status)
-examine_column(df_f1$circuitName)
-examine_column(df_f1$fullName)
-examine_column(df_f1$nationality)
-
