@@ -88,6 +88,8 @@ replace_zeros <- function (x){
 df_movies_raw$budget <- unlist(lapply(df_movies_raw$budget, replace_zeros))
 df_movies_raw$revenue <- unlist(lapply(df_movies_raw$revenue, replace_zeros))
 df_movies_raw$vote_average <- unlist(lapply(df_movies_raw$vote_average, replace_zeros))
+df_movies_raw$runtime <- unlist(lapply(df_movies_raw$runtime, replace_zeros))
+
 
 # Create new profit and profit margin variables
 df_movies_raw <- df_movies_raw %>%
@@ -144,7 +146,7 @@ df_keywords <- df_keywords[,1:11]
 glimpse(df_movies)
 
 # Create a dataframe with id and profit_group
-group_cols <- c(1, 14)
+group_cols <- c(1, 15)
 df_groups <- df_movies[, group_cols]
 glimpse(df_groups)
 
