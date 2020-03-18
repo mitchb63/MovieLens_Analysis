@@ -13,7 +13,7 @@ setwd("C:/Users/mitch/OneDrive/R_Projects/Git/MovieLens_Project")
 ###################################################################
 
 # read in the dataset and view
-df_movies_raw <- read_csv("data/movies_metadata.csv")
+df_movies_init <- read_csv("data/movies_metadata.csv")
 df_ratings <- read_csv("data/ratings.csv")
 df_keywords <- read_csv("data/keywords_clean.csv")
 df_cast <- read_csv("data/cast_clean.csv")
@@ -28,24 +28,24 @@ df_genres <- read_csv("data/movies_genres.csv")
 df_languages <- read_csv("data/movies_languages.csv")
 
 cols <- c(6,3,8,11,15:17,19,21,23,24)
-df_movies_raw <- df_movies_raw[, cols]
+df_movies_init <- df_movies_init[, cols]
 
 #  Convert date fields
-df_movies_raw$release_date <- ymd(df_movies_raw$release_date)
+df_movies_init$release_date <- ymd(df_movies_init$release_date)
 df_ratings$timestamp <- as.POSIXct(df_ratings$timestamp, origin="1970-01-01")
-df_movies_raw$release_month <- month(df_movies_raw$release_date, label = TRUE)
+df_movies_init$release_month <- month(df_movies_init$release_date, label = TRUE)
 
 # Convert selected columns to integers
 df_movie_ints <- c(2, 6,7,11)
-df_movies_raw[,df_movie_ints] <- lapply(df_movies_raw[,df_movie_ints] , as.integer)
+df_movies_init[,df_movie_ints] <- lapply(df_movies_init[,df_movie_ints] , as.integer)
 
 # Convert selected columns to doubles
 df_movie_doubles <- c(4, 10)
-df_movies_raw[,df_movie_doubles] <- lapply(df_movies_raw[,df_movie_doubles] , as.double)
+df_movies_init[,df_movie_doubles] <- lapply(df_movies_init[,df_movie_doubles] , as.double)
 
 # Convert selected columns to factors
 df_movie_fctrs <- c(1,3,8,9)
-df_movies_raw[,df_movie_fctrs] <- lapply(df_movies_raw[,df_movie_fctrs] , factor)
+df_movies_init[,df_movie_fctrs] <- lapply(df_movies_init[,df_movie_fctrs] , factor)
 
 df_rating_fctrs <- c(1,2)
 df_ratings[,df_rating_fctrs] <- lapply(df_ratings[,df_rating_fctrs] , factor)
@@ -71,9 +71,6 @@ df_genres[,df_genres_fctrs] <- lapply(df_genres[,df_genres_fctrs] , factor)
 df_languages_fctrs <- c(1:11)
 df_languages[,df_languages_fctrs] <- lapply(df_languages[,df_languages_fctrs] , factor)
 
-glimpse(df_movies_raw)
-summary(df_movies_raw)
-
 # Function to replace '0's' with NA's
 replace_zeros <- function (x){
   if (is.na(x)){
@@ -85,16 +82,54 @@ replace_zeros <- function (x){
 }
 
 # Apply the function to clean the zeros
-df_movies_raw$budget <- unlist(lapply(df_movies_raw$budget, replace_zeros))
-df_movies_raw$revenue <- unlist(lapply(df_movies_raw$revenue, replace_zeros))
-df_movies_raw$vote_average <- unlist(lapply(df_movies_raw$vote_average, replace_zeros))
-df_movies_raw$runtime <- unlist(lapply(df_movies_raw$runtime, replace_zeros))
+df_movies_init$budget <- unlist(lapply(df_movies_init$budget, replace_zeros))
+df_movies_init$revenue <- unlist(lapply(df_movies_init$revenue, replace_zeros))
+df_movies_init$vote_average <- unlist(lapply(df_movies_init$vote_average, replace_zeros))
+df_movies_init$runtime <- unlist(lapply(df_movies_init$runtime, replace_zeros))
 
+# Remove duplicate rows from all dataframes
+
+df_movies_init <- df_movies_init %>% distinct(id, .keep_all = TRUE)
+df_ratings <- df_ratings %>% distinct(userId, movieId, .keep_all = TRUE)
+df_keywords <- df_keywords %>% distinct(id, .keep_all = TRUE)
+df_cast <- df_cast %>% distinct(id, .keep_all = TRUE)
+df_crew <- df_crew %>% distinct(movie_ID, Job, .keep_all = TRUE)
+df_countries <- df_countries %>% distinct(id, .keep_all = TRUE)
+df_genres <- df_genres %>% distinct(id, .keep_all = TRUE)
+df_languages <- df_languages %>% distinct(id, .keep_all = TRUE)
+df_collections <- df_collections %>% distinct(id, .keep_all = TRUE)
+
+glimpse(df_movies_init)
+summary(df_movies_init)
+
+###################################################################################################
+# Filter the dataset to include only released movies with a budget and revenue greater than zero
+df_movies_base <- df_movies_init %>%
+  filter(status == 'Released')
+
+glimpse(df_movies_base)
+summary(df_movies_base)
+
+ggplot(df_movies_base) +
+  geom_boxplot(aes(x = 1, y = budget)) +
+  coord_flip()
+
+# Remove outliers
+df_movies_base_no_outliers <- df_movies_base %>%
+  filter(budget < 59500000)
+
+glimpse(df_movies_base_no_outliers)
+summary(df_movies_base_no_outliers)
+
+ggplot(df_movies_base_no_outliers) +
+  geom_boxplot(aes(x = 1, y = budget)) +
+  coord_flip()
+
+df_movies_raw <- df_movies_base_no_outliers
 
 # Create new profit and profit margin variables
 df_movies_raw <- df_movies_raw %>%
   mutate(profit = revenue - budget, profit_margin = profit/revenue)
-
 
 movie_div <-quantile(df_movies_raw$profit_margin, probs = 0.80, na.rm = TRUE)
 
@@ -110,17 +145,6 @@ assign_movie <- function(x) {
 
 # Apply the function to categorize each movie based on profit margin
 df_movies_raw$profit_group <- as.factor(unlist(lapply(df_movies_raw$profit_margin, assign_movie)))
-
-# Remove duplicate rows from all dataframes
-
-df_movies_raw <- df_movies_raw %>% distinct(id, .keep_all = TRUE)
-df_ratings <- df_ratings %>% distinct(userId, movieId, .keep_all = TRUE)
-df_keywords <- df_keywords %>% distinct(id, .keep_all = TRUE)
-df_cast <- df_cast %>% distinct(id, .keep_all = TRUE)
-df_crew <- df_crew %>% distinct(movie_ID, Job, .keep_all = TRUE)
-df_countries <- df_countries %>% distinct(id, .keep_all = TRUE)
-df_genres <- df_genres %>% distinct(id, .keep_all = TRUE)
-df_languages <- df_languages %>% distinct(id, .keep_all = TRUE)
 
 #########################################################################################
 # Add the average rating value for each movie
@@ -239,12 +263,6 @@ df_cast_tidy <- df_cast_grps %>%
 
 examine_column(df_cast_tidy$actor)
 
-df_cast_top <- df_cast_tidy %>%
-  filter(profit_group == 'Top_20')
-
-df_cast_bottom <- df_cast_tidy %>%
-  filter(profit_group == 'Bottom_80')
-
 # Function to flag rows with actors from the top actor list
 flg_actors <- function(x) {
   if (x %in% actor_list){
@@ -305,12 +323,6 @@ clean_jobs <- function(x){
 # Apply the function to clean the Job variable
 df_crew_tidy$Job <- factor(unlist(lapply(df_crew_tidy$Job, clean_jobs)))
 
-df_crew_top <- df_crew_tidy %>%
-  filter(profit_group == 'Top_20')
-
-df_crew_bottom <- df_crew_tidy %>%
-  filter(profit_group == 'Bottom_80')
-
 # Function to flag rows with actors from the top actor list
 flg_crew <- function(x) {
   if (x %in% producer_list){
@@ -318,7 +330,7 @@ flg_crew <- function(x) {
   }else{0}
 }
 
-# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+# Apply the function to categorize each row in the crew dataframe based on the crew diff list
 df_crew_tidy$crew_flg <- unlist(lapply(df_crew_tidy$Name, flg_crew))
 
 crew_cols <- c(1,5)
@@ -326,14 +338,14 @@ df_crew_join <- df_crew_tidy[,crew_cols] %>%
   group_by(movie_ID) %>%
   summarize(crew_sum = sum(crew_flg))
 
-# Function to flag movies with keywords from the keyword difference list
+# Function to flag movies with crew from the crew difference list
 flg_crew_films <- function(x) {
   if (x != 0){
     1
   }else{0}
 }
 
-# Apply the function to categorize each row in the keyword dataframe based on the keyword diff list
+# Apply the function to categorize each row in the crew dataframe based on the crew diff list
 df_crew_join$crew_bin <- factor(unlist(lapply(df_crew_join$crew_sum, flg_crew_films)))
 
 df_movies <- df_movies %>%
@@ -383,7 +395,7 @@ df_bottom_countries <- examine_column(df_countries_bottom$country)
 
 
 # Looking at the top n rows of each file
-sample_rows <- c(1:10)
+sample_rows <- c(1:25)
 sample_top <- df_top_countries[sample_rows,]
 sample_bottom <- df_bottom_countries[sample_rows,]
 country_differences <- anti_join(sample_top, sample_bottom, by = 'x')
@@ -442,13 +454,21 @@ df_genres_top <- df_genres_tidy %>%
 df_genres_bottom <- df_genres_tidy %>%
   filter(profit_group == 'Bottom_80')
 
-glimpse(df_genres_top)
+df_genres_first <- df_genres_tidy %>%
+  filter(genre_num == 'genre1')
+
+# Create a variable with the first genre listed for each film
+genre_cols <- c(1, 4)
+df_genres_join_1 <- df_genres_first[, genre_cols]
+  
+summary(df_genres_join_1)
+glimpse(df_genres_first)
 
 # Apply the examine column function to produce the lists of top and bottom genres
 df_top_genres <- examine_column(df_genres_top$genre)
 df_bottom_genres <- examine_column(df_genres_bottom$genre)
 
-sample_rows <- c(1:15)
+sample_rows <- c(1:20)
 sample_top <- df_top_genres[sample_rows,]
 sample_bottom <- df_bottom_genres[sample_rows,]
 genre_differences <- anti_join(sample_top, sample_bottom, by = 'x')
@@ -469,7 +489,7 @@ glimpse(df_genres_tidy)
 summary(df_genres_tidy)
 
 key_cols <- c(1,5)
-df_genres_join <- df_genres_tidy[,key_cols] %>%
+df_genres_join_2 <- df_genres_tidy[,key_cols] %>%
   group_by(id) %>%
   summarize(genre_sum = sum(genre_flg))
 
@@ -481,10 +501,11 @@ flg_genre_films <- function(x) {
 }
 
 # Apply the function to categorize each row in the genre dataframe based on the genre diff list
-df_genres_join$genre_bin <- factor(unlist(lapply(df_genres_join$genre_sum, flg_genre_films)))
+df_genres_join_2$genre_bin <- factor(unlist(lapply(df_genres_join_2$genre_sum, flg_genre_films)))
 
 df_movies <- df_movies %>%
-  left_join(df_genres_join, by = 'id')
+  left_join(df_genres_join_1, by = 'id') %>%
+  left_join(df_genres_join_2, by = 'id')
 
 glimpse(df_movies)
 summary(df_movies)
@@ -560,6 +581,29 @@ df_movies <- df_movies %>%
 
 glimpse(df_movies)
 summary(df_movies)
+
+##########################################################################################
+# Process the collection data
+glimpse(df_collections)
+summary(df_collections)
+
+# Create function to flag movies that are part of a collection
+  assign_collection <- function (x){
+    if (is.na(x)){
+      0}
+    else if (as.character(x) == ''){
+      0}
+      else{
+        1
+      }
+    }
+ 
+# Apply the function to categorize each row in the collections dataframe based on the presence of a collection
+  df_collections$collection_bin <- factor(unlist(lapply(df_collections$collection, assign_collection)))
+  
+# Join the profit_group data with the collection data
+  df_movies <- df_movies %>%
+    left_join(df_collections, by = 'id')
 
 ##########################################
 # Output the resulting files
