@@ -5,6 +5,8 @@
 #  Load packages 
 library(tidyverse)
 library(mi)
+library(mice)
+library(VIM)
 library(lubridate)
 library(ggcorrplot)
 library(ggthemes)
@@ -17,12 +19,12 @@ setwd("C:/Users/mitch/OneDrive/R_Projects/Git/MovieLens_Project")
 
 # read in the dataset and view
 df_movies_raw <- read_csv("data/processed/df_movies.csv")
-# actor_list <- read_csv("data/processed/actor_list.csv")
-# producer_list <- read_csv("data/processed/producer_list.csv")
-# country_diff_list <- read_csv("data/processed/country_diff_list.csv")
-# genre_diff_list <- read_csv("data/processed/genre_diff_list.csv")
-# keyword_diff_list <- read_csv("data/processed/keyword_diff_list.csv")
-# language_diff_list <- read_csv("data/processed/language_diff_list.csv")
+actor_list <- read_csv("data/processed/actor_list.csv")
+producer_list <- read_csv("data/processed/producer_list.csv")
+country_diff_list <- read_csv("data/processed/country_diff_list.csv")
+genre_diff_list <- read_csv("data/processed/genre_diff_list.csv")
+keyword_diff_list <- read_csv("data/processed/keyword_diff_list.csv")
+language_diff_list <- read_csv("data/processed/language_diff_list.csv")
 
 glimpse(df_movies_raw)
 summary(df_movies_raw)
@@ -244,7 +246,7 @@ ggplot(df_movies_filtered) +
 # Correlation analysis
 #Create a plot of correlation using previous example
 glimpse(df_movies_filtered)
-corr_cols <- c(15,2,20,22,28,33,18,4,10,16)
+corr_cols <- c(15,2,6,20,22,28,33,18,4,10,16)
 df_movies_corr <- df_movies_filtered[,corr_cols]
 glimpse(df_movies_corr)
 
@@ -262,7 +264,7 @@ recode_groups <- function (x){
 df_movies_corr$profit_group <- unlist(lapply(as.character(df_movies_corr$profit_group), recode_groups))
 
 # Convert selected columns to integers
-df_corr_nums <- c(3:7)
+df_corr_nums <- c(4:8)
 df_movies_corr[,df_corr_nums] <- lapply(df_movies_corr[,df_corr_nums] , as.numeric)
 
 df_movies_std <- scale(df_movies_corr)
@@ -270,18 +272,18 @@ df_movies_std <- scale(df_movies_corr)
 glimpse(df_movies_std)
 summary(df_movies_std)
 
-corr <- round(cor(df_movies_std, use="pairwise.complete.obs"), 4)
-head(corr)
+corr <- round(cor(df_movies_std, use="pairwise.complete.obs"), 6)
+corr
 
-p.mat <- round(cor_pmat(df_movies_corr), 6)
-head(p.mat)
+p.mat <- round(cor_pmat(df_movies_std), 6)
+p.mat
 
 ggcorrplot(corr, method = "circle", p.mat = p.mat, outline.col = "white", 
            ggtheme = ggplot2::theme_minimal, type = "lower", insig = "blank", colors = c("#11015E", "white", "#890501"))
 
 
 
-# Pre-processing for multiple imputation with mi.  The actual imputation failed due to excessive runtime.
+# Pre-processing for multiple imputation with mice.  
 remove_sums <- c(5,8,9,13:15,17,19,21,24,27,30,32)
 df_movies_bins <- df_movies_raw[,-remove_sums]
 glimpse(df_movies_bins)
@@ -310,5 +312,71 @@ summary(missing_sums)
 image(missing_sums)
 hist(missing_sums)
 
+#  Run imputation using the MICE package
+ini <-  mice(df_movies_bins, maxit = 0)
+ini$method
+ini$predictorMatrix
+ini$post
+ini$visitSequence
+
+bin_methods <-  c('','','','','cart','cart','cart','','cart','cart','','logreg','logreg','cart','logreg','polyreg','','cart','logreg','')
+(round(cor(df_movies_corr, use="pairwise.complete.obs"), 6))
+
+# Calculate the proportion of useable cases
+(p <-  md.pairs(df_movies_bins))
+round(p$mr/(p$mr + p$mm), 3)
+
+# Create the prediction matrix using quickpred
+pred_mat <- quickpred(df_movies_bins, minpuc = 0.25, exclude = 'id')
+
+# Create the imputations
+imp <- mice(df_movies_bins, meth = bin_methods, pred = pred_mat, seed = 7, maxit = 50)
+
+# Create the fit model
+fit.mi <- with(data = imp, exp = lm(revenue ~ budget + vote_average + collection_bin))
+
+# combine the results
+combFit <- pool(fit.mi)
+combFit
+glimpse(combFit)
+summary(combFit)
+pool.r.squared(fit.mi)
+
+print(imp)
+ imp$imp$revenue
+ imp$imp$runtime
+ imp$imp$vote_average
+ imp$imp$release_month
+ imp$imp$avg_rating
+ imp$imp$actor_bin
+ imp$imp$crew_bin
+ imp$imp$country_count
+ imp$imp$country_bin
+ imp$imp$genre
+ imp$imp$language_count
+ imp$imp$language_bin
+
+ 
+ 
+imp_1 <-  complete(imp)
+imp_2 <-  complete(imp, 2)
+imp_3 <-  complete(imp, 3)
+imp_4 <-  complete(imp, 4)
+imp_5 <-  complete(imp, 5)
+
+class(imp_1)
+
+stripplot(imp, pch = 20, cex = 1.2)
+xyplot(imp, revenue ~ budget | .imp, pch = 20, cex = 1.4) 
+densityplot(imp)
+plot(imp)
 
 
+##########################################
+# Output the resulting files
+print("writing imputed data csv...")
+write_csv(imp_1, "data/processed/df_imp1.csv")
+write_csv(imp_2, "data/processed/df_imp2.csv")
+write_csv(imp_3, "data/processed/df_imp3.csv")
+write_csv(imp_4, "data/processed/df_imp4.csv")
+write_csv(imp_5, "data/processed/df_imp5.csv")
