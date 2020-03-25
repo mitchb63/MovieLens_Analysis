@@ -169,9 +169,10 @@ df_keywords <- df_keywords[,1:11]
 # Get the id and profit group for each id
 glimpse(df_movies)
 
-# Create a dataframe with id and profit_group
-group_cols <- c(1, 15)
+# Create a dataframe with id, release date and profit_group
+group_cols <- c(1,5,15)
 df_groups <- df_movies[, group_cols]
+df_groups$release_date <- year(as.POSIXlt(df_groups$release_date, origin = '1970-01-01 00:00:00'))
 glimpse(df_groups)
 
 # Join the profit_group data to the keyword data
@@ -617,3 +618,6 @@ write_csv(as.data.frame(producer_list), "data/processed/producer_list.csv")
 write_csv(as.data.frame(country_diff_list), "data/processed/country_diff_list.csv")
 write_csv(as.data.frame(genre_diff_list), "data/processed/genre_diff_list.csv")
 write_csv(as.data.frame(language_diff_list), "data/processed/language_diff_list.csv")
+
+write_csv(as.data.frame(df_keywords_tidy), "data/processed/keywords_tidy.csv")
+

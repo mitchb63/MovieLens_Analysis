@@ -21,18 +21,6 @@ df_imp_3 <- read_csv("data/processed/df_imp3.csv")
 df_imp_4 <- read_csv("data/processed/df_imp4.csv")
 df_imp_5 <- read_csv("data/processed/df_imp5.csv")
 
-glimpse(df_imp_1)
-glimpse(df_imp_2)
-glimpse(df_imp_3)
-glimpse(df_imp_4)
-glimpse(df_imp_5)
-
-summary(df_imp_1)
-summary(df_imp_2)
-summary(df_imp_3)
-summary(df_imp_4)
-summary(df_imp_5)
-
 # Convert selected columns to factors
 df_imp_fctrs <- c(1,3,9,11:13,15:17,19,20)
 df_imp_1[,df_imp_fctrs] <- lapply(df_imp_1[,df_imp_fctrs] , factor)
@@ -75,6 +63,20 @@ df_imp_2$profit_group <- as.factor(unlist(lapply(df_imp_2$profit_margin, assign_
 df_imp_3$profit_group <- as.factor(unlist(lapply(df_imp_3$profit_margin, assign_movie, y = movie_div_3)))
 df_imp_4$profit_group <- as.factor(unlist(lapply(df_imp_4$profit_margin, assign_movie, y = movie_div_4)))
 df_imp_5$profit_group <- as.factor(unlist(lapply(df_imp_5$profit_margin, assign_movie, y = movie_div_5)))
+
+glimpse(df_imp_1)
+glimpse(df_imp_2)
+glimpse(df_imp_3)
+glimpse(df_imp_4)
+glimpse(df_imp_5)
+
+summary(df_imp_1)
+summary(df_imp_2)
+summary(df_imp_3)
+summary(df_imp_4)
+summary(df_imp_5)
+
+(random_data_selection <- sample(1:5, 1))
 
 ##############################################################################
 # Correlation analysis
@@ -176,7 +178,7 @@ ggplot(df_imp_1) +
   theme_tufte()
 
 ggplot(df_imp_1) +
-  geom_bar(aes(x = actor_bin, fill = profit_group), position = 'dodge') +
+  geom_bar(aes(x = actor_bin, fill = profit_group), position = 'fill') +
   theme_tufte()
 
 # the 'quality' of the producer and/or director may have an influence - see the producer_list
@@ -233,7 +235,7 @@ ggplot(df_imp_1) +
   theme_tufte()
 
 ggplot(df_imp_1) +
-  geom_bar(aes(x = genre_bin, fill = profit_group), position = 'dodge') +
+  geom_bar(aes(x = genre_bin, fill = profit_group), position = 'fill') +
   theme_tufte()
 
 # Whether a movie is part of a collection does appear to be a significant factor
@@ -286,3 +288,7 @@ ggplot(df_imp_1) +
   coord_flip() +
   theme_tufte()
 
+##########################################
+# Output the resulting files
+print("writing imputed data csv...")
+write_csv(df_imp_1, "data/processed/movie_data_4_tableau.csv")
