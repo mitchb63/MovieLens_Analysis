@@ -17,7 +17,7 @@ recommendation, and the creation of a final presentation that will be used for r
 
 The problem statement for the project was defined as:
 
-**What are the key components that differentiate the top 20% of films from the remainder when considering profit margin?**
+** What are the key components that differentiate the top 20% of films from the remainder when considering profit margin? **
 
 Three hypotheses were constructed as the foundation of the study:
 
