@@ -1,6 +1,7 @@
 # MovieLens_Analysis
 ```
- Hypothesis driven analysis of Kaggle MovieLens data with an examination of limitations and bias.  Conducted as part of Udacity's Data Visualization Nanodegree program.
+ Hypothesis driven analysis of Kaggle MovieLens data with an examination of limitations and bias.  
+ This project was conducted as part of Udacity's Data Visualization Nanodegree program.
 ```
 
 ## Introduction
