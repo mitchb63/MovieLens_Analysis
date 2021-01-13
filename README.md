@@ -23,6 +23,6 @@ The key findings of the analysis were that story factors and budget appear to ha
 
 ## Deliverables 
 Final deliverables for this project include:
-o - The final report markdown 
-o - The final presentation slide deck with presenter's notes
+* The final report markdown 
+* The final presentation slide deck with presenter's notes
 
