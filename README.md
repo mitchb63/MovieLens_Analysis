@@ -1,11 +1,9 @@
 # MovieLens_Analysis
-```
  Hypothesis driven analysis of Kaggle MovieLens data with an examination of limitations and bias.  
  This project was conducted as part of Udacity's Data Visualization Nanodegree program.
-```
+
 
 ## Introduction
-```
 The data used is from a Kaggle dataset that contains metadata for 45,000 movies listed in the MovieLens Dataset. The dataset 
 consists of movies released on or before July 2017. Data points include cast, crew, plot keywords, budget, revenue, posters, 
 release dates, languages, production companies, countries, TMDB vote counts and vote averages.  The dataset also has 26 million 
@@ -24,7 +22,7 @@ Three hypotheses were constructed as the foundation of the study:
 *	Story factors influence the film’s profit margin
 *	Production factors influence the profit margin
 *	Public opinion factors affect the profit margin
-```
+
 
 ## Findings
 ```
