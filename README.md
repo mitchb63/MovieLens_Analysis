@@ -23,6 +23,6 @@ The key findings of the analysis were that story factors and budget appear to ha
 
 ## Deliverables 
 Final deliverables for this project include:
-* The final report markdown 
-* The final presentation slide deck with presenter's notes
+* The [Final Report Markdown](https://github.com/mitchb63/MovieLens_Analysis/blob/master/deliverables/MovieLens%20Data%20Analysis%20with%20Examination%20of%20Limitations%20and%20Bias.pdf) (as PDF)
+* The [Final Presentation Slide Deck](https://github.com/mitchb63/MovieLens_Analysis/blob/master/deliverables/MovieLens_Analysis_Slide_Deck.pptx) with presenter's notes
 
